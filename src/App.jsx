@@ -1,42 +1,34 @@
-import { Printer } from 'lucide-react'
 import { resume } from './data/resume'
 import Header from './components/Header'
-import Section from './components/Section'
 import Experience from './components/Experience'
 import Education from './components/Education'
 import Skills from './components/Skills'
-import Projects from './components/Projects'
+import { Languages, Extracurricular } from './components/Extras'
 
 function App() {
   return (
-    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950 py-10 px-4">
-      <div className="max-w-3xl mx-auto">
-        <div className="flex justify-end mb-4 no-print">
-          <button
-            type="button"
-            onClick={() => window.print()}
-            className="inline-flex items-center gap-2 text-sm px-3 py-1.5 rounded-md border border-neutral-300 dark:border-neutral-700 text-neutral-700 dark:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800"
-          >
-            <Printer size={16} /> Save as PDF
-          </button>
-        </div>
-
-        <main className="bg-white dark:bg-neutral-900 rounded-xl shadow-sm print-shadow-none border border-neutral-200 dark:border-neutral-800 p-6 sm:p-10">
+    <div className="min-h-screen bg-neutral-100 dark:bg-neutral-950 py-10 px-4">
+      <div className="max-w-4xl mx-auto">
+        <main className="bg-white dark:bg-neutral-900 rounded-2xl shadow-xl print-shadow-none border border-neutral-200 dark:border-neutral-800 overflow-hidden">
           <Header resume={resume} />
 
-          {resume.summary && (
-            <Section title="Summary">
-              <p className="text-sm text-neutral-700 dark:text-neutral-300 leading-relaxed">
-                {resume.summary}
-              </p>
-            </Section>
-          )}
+          <div className="grid md:grid-cols-[260px_1fr] gap-x-10 gap-y-8 p-6 sm:p-10">
+            <aside className="space-y-8 md:order-1 md:border-r md:border-neutral-100 md:dark:border-neutral-800 md:pr-8">
+              <Skills groups={resume.skills} />
+              <Education items={resume.education} />
+              <Languages items={resume.languages} />
+              <Extracurricular items={resume.extracurricular} />
+            </aside>
 
-          <Experience items={resume.experience} />
-          <Education items={resume.education} />
-          <Skills items={resume.skills} />
-          <Projects items={resume.projects} />
+            <div className="md:order-2">
+              <Experience items={resume.experience} />
+            </div>
+          </div>
         </main>
+
+        <p className="no-print text-center text-xs text-neutral-400 dark:text-neutral-600 mt-4">
+          Edit <code className="font-mono">src/data/resume.js</code> to update this resume.
+        </p>
       </div>
     </div>
   )
