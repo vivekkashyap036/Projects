@@ -25,10 +25,6 @@ function App() {
             </div>
           </div>
         </main>
-
-        <p className="no-print text-center text-xs text-neutral-400 dark:text-neutral-600 mt-4">
-          Edit <code className="font-mono">src/data/resume.js</code> to update this resume.
-        </p>
       </div>
     </div>
   )

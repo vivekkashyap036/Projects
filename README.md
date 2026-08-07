@@ -4,7 +4,7 @@ A responsive resume/CV web app built with React, Vite, and Tailwind CSS.
 
 ## Editing your resume
 
-All resume content lives in one place: [`src/data/resume.js`](src/data/resume.js). Update the `name`, `title`, `summary`, `experience`, `education`, `skills`, and `projects` fields with your own details — the UI updates automatically.
+All resume content lives in one place: [`src/data/resume.js`](src/data/resume.js). Update the `name`, `title`, `experience`, `education`, `skills`, `extracurricular`, and `languages` fields with your own details — the UI updates automatically.
 
 ## Development
 
