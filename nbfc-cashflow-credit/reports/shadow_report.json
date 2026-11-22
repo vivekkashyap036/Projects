@@ -1,0 +1,90 @@
+{
+  "notice": "Shadow mode: read-only comparison. No real lending decision was changed.",
+  "data": "Model built on SYNTHETIC data; treat results as a method check, not evidence of accuracy.",
+  "model_version": "cfs-lr-0.1.0",
+  "inputs": {
+    "loans": 2000,
+    "scored": 2000,
+    "not_scored_insufficient_history": 0,
+    "lender_approved": 1300,
+    "lender_declined": 700,
+    "approved_with_known_outcome": 1300
+  },
+  "lender": {
+    "approval_rate": 0.65,
+    "default_rate_of_approvals": 0.0723
+  },
+  "model": {
+    "band_shares": {
+      "approve": 0.37,
+      "review": 0.437,
+      "decline": 0.193
+    },
+    "default_rate_by_band_among_lender_approvals": [
+      {
+        "band": "approve",
+        "n": 620,
+        "default_rate": 0.0323
+      },
+      {
+        "band": "review",
+        "n": 527,
+        "default_rate": 0.093
+      },
+      {
+        "band": "decline",
+        "n": 153,
+        "default_rate": 0.1634
+      }
+    ],
+    "auc_on_lender_approvals": 0.6969,
+    "if_decline_band_applied_to_lender_approvals": {
+      "lender_approvals_this_would_have_declined": 153,
+      "their_default_rate": 0.1634,
+      "default_rate_of_the_rest": 0.0602,
+      "defaults_avoided": 25,
+      "good_loans_lost": 128
+    },
+    "agreement_with_lender": {
+      "approve": {
+        "approve": 620,
+        "decline": 153,
+        "review": 527
+      },
+      "decline": {
+        "approve": 120,
+        "decline": 233,
+        "review": 347
+      }
+    }
+  },
+  "baseline_rule": {
+    "rule": "approve if monthly UPI income >= 3.0 x EMI",
+    "approval_rate": 0.7155,
+    "auc_on_lender_approvals": 0.6798,
+    "if_applied_to_lender_approvals": {
+      "lender_approvals_this_would_have_declined": 225,
+      "their_default_rate": 0.1422,
+      "default_rate_of_the_rest": 0.0577,
+      "defaults_avoided": 32,
+      "good_loans_lost": 193
+    },
+    "agreement_with_lender": {
+      "approve": {
+        "approve": 1075,
+        "decline": 225
+      },
+      "decline": {
+        "approve": 356,
+        "decline": 344
+      }
+    }
+  },
+  "lender_declines": {
+    "count": 700,
+    "model_would_approve": 120,
+    "model_would_review": 347,
+    "baseline_would_approve": 356,
+    "note": "Outcomes are unknown for loans the lender declined, so these cannot be scored as right or wrong. They are candidates for a controlled test, not proof of missed good borrowers."
+  }
+}
