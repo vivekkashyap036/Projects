@@ -1,0 +1,495 @@
+{
+  "data": "SYNTHETIC - not evidence of real-world accuracy",
+  "model_version": "cfs-lr-0.1.0",
+  "n_test": 2000,
+  "test_default_rate": 0.0975,
+  "logistic_regression": {
+    "auc": 0.692,
+    "ks": 0.2968,
+    "brier": 0.0855,
+    "coefficients": {
+      "log_income_to_emi": -0.499145,
+      "weekly_cv": 0.046339,
+      "longest_dry_spell": 0.016563,
+      "active_day_share": -0.205061,
+      "recent_trend": -0.066813
+    },
+    "C": 0.03
+  },
+  "gradient_boosting_comparison": {
+    "auc": 0.6822,
+    "ks": 0.2849,
+    "brier": 0.0862,
+    "note": "comparison only; not used for decisions"
+  },
+  "baseline_rule": {
+    "rule": "approve if monthly UPI income >= 3.0 x EMI",
+    "approval_rate": 0.7155,
+    "default_rate_approved": 0.0692,
+    "auc_rule_as_binary": 0.6151,
+    "auc_ratio_as_ranking": 0.683
+  },
+  "vs_baseline": {
+    "same_approval_rate": {
+      "approval_rate": 0.7155,
+      "baseline_default_rate": 0.0692,
+      "model_default_rate": 0.0678,
+      "relative_reduction": 0.0202
+    },
+    "same_default_rate": {
+      "default_rate": 0.0692,
+      "baseline_approval_rate": 0.7155,
+      "model_approval_rate": 0.739,
+      "extra_approvals_per_1000_applicants": 23
+    },
+    "auc_gain_vs_rule_binary": {
+      "gain": 0.0769,
+      "ci95_low": 0.0497,
+      "ci95_high": 0.1044,
+      "n_boot": 1000
+    },
+    "auc_gain_vs_ratio_ranking": {
+      "gain": 0.0091,
+      "ci95_low": -0.0097,
+      "ci95_high": 0.0276,
+      "n_boot": 1000
+    },
+    "gbm_auc_gain_vs_lr": {
+      "gain": -0.0099,
+      "ci95_low": -0.0384,
+      "ci95_high": 0.0185,
+      "n_boot": 1000
+    }
+  },
+  "calibration_by_decile": [
+    {
+      "decile": 1,
+      "n": 200,
+      "mean_predicted_pd": 0.0358,
+      "observed_default_rate": 0.005
+    },
+    {
+      "decile": 2,
+      "n": 200,
+      "mean_predicted_pd": 0.0496,
+      "observed_default_rate": 0.04
+    },
+    {
+      "decile": 3,
+      "n": 200,
+      "mean_predicted_pd": 0.0603,
+      "observed_default_rate": 0.055
+    },
+    {
+      "decile": 4,
+      "n": 200,
+      "mean_predicted_pd": 0.0701,
+      "observed_default_rate": 0.045
+    },
+    {
+      "decile": 5,
+      "n": 200,
+      "mean_predicted_pd": 0.0799,
+      "observed_default_rate": 0.105
+    },
+    {
+      "decile": 6,
+      "n": 200,
+      "mean_predicted_pd": 0.0906,
+      "observed_default_rate": 0.1
+    },
+    {
+      "decile": 7,
+      "n": 200,
+      "mean_predicted_pd": 0.1036,
+      "observed_default_rate": 0.12
+    },
+    {
+      "decile": 8,
+      "n": 200,
+      "mean_predicted_pd": 0.1206,
+      "observed_default_rate": 0.12
+    },
+    {
+      "decile": 9,
+      "n": 200,
+      "mean_predicted_pd": 0.1491,
+      "observed_default_rate": 0.17
+    },
+    {
+      "decile": 10,
+      "n": 200,
+      "mean_predicted_pd": 0.2361,
+      "observed_default_rate": 0.215
+    }
+  ],
+  "approval_vs_default_curve": {
+    "model": [
+      {
+        "approval_rate": 0.05,
+        "default_rate_approved": 0.01
+      },
+      {
+        "approval_rate": 0.1,
+        "default_rate_approved": 0.005
+      },
+      {
+        "approval_rate": 0.15,
+        "default_rate_approved": 0.01
+      },
+      {
+        "approval_rate": 0.2,
+        "default_rate_approved": 0.0225
+      },
+      {
+        "approval_rate": 0.25,
+        "default_rate_approved": 0.032
+      },
+      {
+        "approval_rate": 0.3,
+        "default_rate_approved": 0.0333
+      },
+      {
+        "approval_rate": 0.35,
+        "default_rate_approved": 0.0386
+      },
+      {
+        "approval_rate": 0.4,
+        "default_rate_approved": 0.0362
+      },
+      {
+        "approval_rate": 0.45,
+        "default_rate_approved": 0.04
+      },
+      {
+        "approval_rate": 0.5,
+        "default_rate_approved": 0.05
+      },
+      {
+        "approval_rate": 0.55,
+        "default_rate_approved": 0.0564
+      },
+      {
+        "approval_rate": 0.6,
+        "default_rate_approved": 0.0583
+      },
+      {
+        "approval_rate": 0.65,
+        "default_rate_approved": 0.0615
+      },
+      {
+        "approval_rate": 0.7,
+        "default_rate_approved": 0.0671
+      },
+      {
+        "approval_rate": 0.75,
+        "default_rate_approved": 0.0713
+      },
+      {
+        "approval_rate": 0.8,
+        "default_rate_approved": 0.0737
+      },
+      {
+        "approval_rate": 0.85,
+        "default_rate_approved": 0.0788
+      },
+      {
+        "approval_rate": 0.9,
+        "default_rate_approved": 0.0844
+      },
+      {
+        "approval_rate": 0.95,
+        "default_rate_approved": 0.0926
+      },
+      {
+        "approval_rate": 1.0,
+        "default_rate_approved": 0.0975
+      }
+    ],
+    "ratio_ranking_baseline": [
+      {
+        "approval_rate": 0.05,
+        "default_rate_approved": 0.01
+      },
+      {
+        "approval_rate": 0.1,
+        "default_rate_approved": 0.015
+      },
+      {
+        "approval_rate": 0.15,
+        "default_rate_approved": 0.0233
+      },
+      {
+        "approval_rate": 0.2,
+        "default_rate_approved": 0.0275
+      },
+      {
+        "approval_rate": 0.25,
+        "default_rate_approved": 0.028
+      },
+      {
+        "approval_rate": 0.3,
+        "default_rate_approved": 0.0317
+      },
+      {
+        "approval_rate": 0.35,
+        "default_rate_approved": 0.0343
+      },
+      {
+        "approval_rate": 0.4,
+        "default_rate_approved": 0.04
+      },
+      {
+        "approval_rate": 0.45,
+        "default_rate_approved": 0.0411
+      },
+      {
+        "approval_rate": 0.5,
+        "default_rate_approved": 0.048
+      },
+      {
+        "approval_rate": 0.55,
+        "default_rate_approved": 0.0536
+      },
+      {
+        "approval_rate": 0.6,
+        "default_rate_approved": 0.0608
+      },
+      {
+        "approval_rate": 0.65,
+        "default_rate_approved": 0.0638
+      },
+      {
+        "approval_rate": 0.7,
+        "default_rate_approved": 0.0679
+      },
+      {
+        "approval_rate": 0.75,
+        "default_rate_approved": 0.0713
+      },
+      {
+        "approval_rate": 0.8,
+        "default_rate_approved": 0.0756
+      },
+      {
+        "approval_rate": 0.85,
+        "default_rate_approved": 0.0812
+      },
+      {
+        "approval_rate": 0.9,
+        "default_rate_approved": 0.0856
+      },
+      {
+        "approval_rate": 0.95,
+        "default_rate_approved": 0.0926
+      },
+      {
+        "approval_rate": 1.0,
+        "default_rate_approved": 0.0975
+      }
+    ],
+    "baseline_rule_point": {
+      "approval_rate": 0.7155,
+      "default_rate_approved": 0.0692
+    }
+  },
+  "bands": [
+    {
+      "band": "approve",
+      "share": 0.37,
+      "n": 740,
+      "default_rate": 0.0378,
+      "score_min": 575,
+      "score_max": 662
+    },
+    {
+      "band": "review",
+      "share": 0.437,
+      "n": 874,
+      "default_rate": 0.1064,
+      "score_min": 535,
+      "score_max": 574
+    },
+    {
+      "band": "decline",
+      "share": 0.193,
+      "n": 386,
+      "default_rate": 0.1917,
+      "score_min": 312,
+      "score_max": 534
+    }
+  ],
+  "score_distribution": [
+    2,
+    0,
+    0,
+    0,
+    0,
+    5,
+    15,
+    58,
+    178,
+    390,
+    612,
+    470,
+    224,
+    40,
+    6,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  "segments": {
+    "vendor_type": [
+      {
+        "segment": "flower_seller",
+        "n": 179,
+        "defaults": 21,
+        "default_rate": 0.1173,
+        "auc": 0.7092,
+        "approve_share": 0.2402,
+        "default_rate_in_approve_band": 0.0233,
+        "flags": [
+          "only 21 defaults: too few to judge"
+        ],
+        "weak": true
+      },
+      {
+        "segment": "fruit_cart",
+        "n": 309,
+        "defaults": 24,
+        "default_rate": 0.0777,
+        "auc": 0.6712,
+        "approve_share": 0.3463,
+        "default_rate_in_approve_band": 0.0187,
+        "flags": [
+          "only 24 defaults: too few to judge"
+        ],
+        "weak": true
+      },
+      {
+        "segment": "kirana_shop",
+        "n": 304,
+        "defaults": 29,
+        "default_rate": 0.0954,
+        "auc": 0.7086,
+        "approve_share": 0.523,
+        "default_rate_in_approve_band": 0.0566,
+        "flags": [
+          "only 29 defaults: too few to judge"
+        ],
+        "weak": true
+      },
+      {
+        "segment": "street_food",
+        "n": 337,
+        "defaults": 37,
+        "default_rate": 0.1098,
+        "auc": 0.6814,
+        "approve_share": 0.4362,
+        "default_rate_in_approve_band": 0.0612,
+        "flags": [],
+        "weak": false
+      },
+      {
+        "segment": "tea_stall",
+        "n": 363,
+        "defaults": 36,
+        "default_rate": 0.0992,
+        "auc": 0.7148,
+        "approve_share": 0.292,
+        "default_rate_in_approve_band": 0.0189,
+        "flags": [],
+        "weak": false
+      },
+      {
+        "segment": "vegetable_seller",
+        "n": 508,
+        "defaults": 48,
+        "default_rate": 0.0945,
+        "auc": 0.6953,
+        "approve_share": 0.3504,
+        "default_rate_in_approve_band": 0.0281,
+        "flags": [],
+        "weak": false
+      }
+    ],
+    "income_band": [
+      {
+        "segment": "< Rs 15k/month",
+        "n": 676,
+        "defaults": 57,
+        "default_rate": 0.0843,
+        "auc": 0.6939,
+        "approve_share": 0.1716,
+        "default_rate_in_approve_band": 0.0086,
+        "flags": [],
+        "weak": false
+      },
+      {
+        "segment": "Rs 15-30k",
+        "n": 634,
+        "defaults": 71,
+        "default_rate": 0.112,
+        "auc": 0.7444,
+        "approve_share": 0.3691,
+        "default_rate_in_approve_band": 0.0342,
+        "flags": [],
+        "weak": false
+      },
+      {
+        "segment": "Rs 30-60k",
+        "n": 473,
+        "defaults": 52,
+        "default_rate": 0.1099,
+        "auc": 0.7276,
+        "approve_share": 0.5116,
+        "default_rate_in_approve_band": 0.0413,
+        "flags": [],
+        "weak": false
+      },
+      {
+        "segment": ">= Rs 60k",
+        "n": 217,
+        "defaults": 15,
+        "default_rate": 0.0691,
+        "auc": 0.6442,
+        "approve_share": 0.682,
+        "default_rate_in_approve_band": 0.0608,
+        "flags": [
+          "only 15 defaults: too few to judge"
+        ],
+        "weak": true
+      }
+    ]
+  },
+  "bias_check_cash_share": [
+    {
+      "segment": "cash < 40%",
+      "n": 454,
+      "actual_default_rate": 0.0859,
+      "approve_share": 0.6344,
+      "decline_share": 0.0396
+    },
+    {
+      "segment": "cash 40-60%",
+      "n": 815,
+      "actual_default_rate": 0.1129,
+      "approve_share": 0.4282,
+      "decline_share": 0.1153
+    },
+    {
+      "segment": "cash > 60%",
+      "n": 731,
+      "actual_default_rate": 0.0876,
+      "approve_share": 0.1409,
+      "decline_share": 0.3748
+    }
+  ]
+}
