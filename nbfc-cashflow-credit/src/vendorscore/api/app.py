@@ -10,14 +10,22 @@ from pathlib import Path
 from typing import Any, AsyncIterator
 
 import numpy as np
-from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import JSONResponse
+import json
+import os
+from functools import lru_cache
+
+import pandas as pd
+from fastapi import FastAPI, HTTPException, Query, Request
+from fastapi.responses import FileResponse, JSONResponse
+from pydantic import BaseModel
 
 from vendorscore import __version__
 from vendorscore.api.audit import AuditLog, hash_vendor_id
 from vendorscore.agents.explainer import explain
 from vendorscore.api.schemas import DATA_NOTE, DECISION_NOTE, ExplainRequest, ScoreRequest, ScoreResponse
-from vendorscore.config import PROJECT_ROOT, load_config
+from vendorscore.agents import early_warning as ew
+from vendorscore.agents import shadow as shadow_agent
+from vendorscore.config import ARTIFACT_DIR, DATA_DIR, PROJECT_ROOT, REPORT_DIR, load_config
 from vendorscore.features import FEATURES, records_to_series
 from vendorscore.logging_setup import get_logger
 from vendorscore.model import MODEL_PATH, CashFlowScorer
@@ -147,6 +155,125 @@ def explain_endpoint(req: ExplainRequest) -> dict[str, Any]:
                                    "status": 200, "request_id": req.request_id, "source": res["source"],
                                    "validator_ok": res["validator"]["ok"]})
     return res
+
+
+# --------------------------------------------------------------------------- #
+# Lender console (UI) and demo endpoints. Demo endpoints read SYNTHETIC data only
+# and can be switched off with DEMO_MODE=0.
+# --------------------------------------------------------------------------- #
+UI_DIR = PROJECT_ROOT / "ui"
+
+
+def _demo_enabled() -> None:
+    if os.environ.get("DEMO_MODE", "1") == "0":
+        raise HTTPException(404, "demo endpoints disabled")
+
+
+@lru_cache(maxsize=1)
+def _demo_tables() -> dict[str, pd.DataFrame]:
+    from vendorscore.data.synth import load_tables
+
+    return load_tables()
+
+
+@lru_cache(maxsize=1)
+def _test_ids() -> list[str]:
+    p = ARTIFACT_DIR / "split.json"
+    return json.loads(p.read_text())["test_vendor_ids"] if p.exists() else []
+
+
+@app.get("/", include_in_schema=False)
+def ui_index() -> FileResponse:
+    return FileResponse(UI_DIR / "index.html")
+
+
+@app.get("/demo/vendors")
+def demo_vendors(limit: int = Query(60, le=500)) -> list[dict[str, Any]]:
+    """A spread of held-out synthetic vendors to try in the console."""
+    _demo_enabled()
+    t = _demo_tables()
+    v = t["vendors"][t["vendors"].vendor_id.isin(set(_test_ids()))]
+    v = v.sort_values("vendor_id").groupby("vendor_type", group_keys=False).head(max(1, limit // 6))
+    return v[["vendor_id", "vendor_type", "loan_amount", "tenure_months", "emi"]].head(limit).to_dict("records")
+
+
+@app.get("/demo/vendor/{vendor_id}")
+def demo_vendor(vendor_id: str) -> dict[str, Any]:
+    """A ready-to-send /score payload built from a synthetic vendor's 180-day observation window."""
+    _demo_enabled()
+    t = _demo_tables()
+    row = t["vendors"][t["vendors"].vendor_id == vendor_id]
+    if row.empty:
+        raise HTTPException(404, "unknown synthetic vendor")
+    r = row.iloc[0]
+    d = t["daily_upi"]
+    d = d[(d.vendor_id == vendor_id) & (d.day < int(r.origination_day))]
+    return {
+        "payload": {
+            "vendor_id": vendor_id, "consent_given": True, "vendor_type": r.vendor_type,
+            "loan": {"amount": int(r.loan_amount), "tenure_months": int(r.tenure_months), "emi": int(r.emi)},
+            "daily_records": [{"day": int(a), "n_txn": int(b), "inflow": float(c)} for a, b, c in zip(d.day, d.n_txn, d.inflow)],
+        },
+        "synthetic_outcome": {"default_12m": int(r.default_12m),
+                              "note": "Synthetic ground truth, shown for demo only. A real lender would not know this at decision time."},
+    }
+
+
+@app.get("/ews/queue")
+def ews_queue(as_of_day: int = Query(300, ge=200, le=544)) -> dict[str, Any]:
+    """Early-warning agent: this week's review queue for held-out synthetic loans."""
+    _demo_enabled()
+    alerts = ew.run_weekly(_demo_tables(), as_of_day, vendor_ids=_test_ids() or None)
+    assert state.audit is not None
+    state.audit.append("ews_run", {"model_version": state.scorer.model_version if state.scorer else None,
+                                   "status": 200, "as_of_day": as_of_day, "alerts": len(alerts)})
+    return {"as_of_day": as_of_day, "alerts": ew.alerts_as_dicts(alerts),
+            "note": ew.HUMAN_ONLY}
+
+
+@app.get("/reports/{name}")
+def get_report(name: str) -> Any:
+    allowed = {"evaluation", "early_warning", "shadow_report"}
+    if name not in allowed:
+        raise HTTPException(404, "unknown report")
+    p = REPORT_DIR / f"{name}.json"
+    if not p.exists():
+        raise HTTPException(404, f"report not generated yet; run `make reports`")
+    return json.loads(p.read_text())
+
+
+class ShadowCSV(BaseModel):
+    loans_csv: str
+    daily_csv: str
+
+
+@app.post("/shadow/report")
+def shadow_from_csv(body: ShadowCSV) -> dict[str, Any]:
+    """Shadow mode on uploaded CSV text. Read-only: nothing is changed or stored except an audit entry."""
+    try:
+        res = shadow_agent.report_from_csv_text(body.loans_csv, body.daily_csv)
+    except shadow_agent.ShadowInputError as exc:
+        raise HTTPException(422, str(exc)) from exc
+    assert state.audit is not None
+    state.audit.append("shadow_report", {"model_version": state.scorer.model_version if state.scorer else None,
+                                         "status": 200, "loans": res["inputs"]["loans"]})
+    return res
+
+
+@app.get("/shadow/sample.csv")
+def shadow_sample(kind: str = Query("loans", pattern="^(loans|daily)$")) -> FileResponse:
+    _demo_enabled()
+    p = DATA_DIR / f"shadow_{kind}_sample.csv"
+    if not p.exists():
+        raise HTTPException(404, "run `python -m vendorscore.agents.shadow` first")
+    return FileResponse(p, media_type="text/csv", filename=p.name)
+
+
+@app.get("/audit/tail")
+def audit_tail(n: int = Query(30, le=200)) -> dict[str, Any]:
+    assert state.audit is not None
+    ok, count = state.audit.verify_chain()
+    return {"chain_ok": ok, "entries": count, "tail": state.audit.tail(n)[::-1]}
 
 
 @app.exception_handler(ValueError)

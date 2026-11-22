@@ -1,0 +1,7 @@
+data/*.parquet
+data/*.csv
+artifacts/
+reports/
+tests/
+__pycache__/
+.pytest_cache/

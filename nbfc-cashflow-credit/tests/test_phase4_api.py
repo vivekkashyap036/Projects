@@ -119,3 +119,11 @@ def test_explain_endpoint_uses_only_score_output(client, monkeypatch):
     assert out["source"] == "template" and out["validator"]["ok"]
     assert "HIDDEN-55" not in json.dumps(out["llm_input"])
     assert str(body["score"]) in out["en"]
+
+
+def test_console_and_audit_endpoints(client):
+    assert client.get("/").status_code == 200
+    client.post("/score", json=_payload())
+    tail = client.get("/audit/tail?n=5").json()
+    assert tail["chain_ok"] is True and tail["entries"] >= 1
+    assert client.get("/reports/not_a_report").status_code == 404

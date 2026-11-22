@@ -1,0 +1,544 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vendor Credit Console</title>
+<style>
+:root{
+  --bg:#f5f7fa; --surface:#ffffff; --surface-2:#eef2f6; --ink:#0d1f3c; --ink-2:#44546a; --ink-3:#6b7a90;
+  --line:#dde3ea; --teal:#0f8f7e; --teal-soft:#e3f4f1; --amber:#d98a00; --amber-soft:#fdf1dc;
+  --red:#c2412d; --red-soft:#fbe7e3; --navy:#0d1f3c; --focus:#2f6fde;
+  --approve:#0f8f7e; --review:#d98a00; --decline:#c2412d;
+  --shadow:0 1px 2px rgba(13,31,60,.06),0 4px 16px rgba(13,31,60,.05);
+  --radius:12px;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0b1424; --surface:#111d31; --surface-2:#18263d; --ink:#e8eef7; --ink-2:#b4c0d3; --ink-3:#8494ab;
+  --line:#22324c; --teal:#2bb9a5; --teal-soft:#123a3a; --amber:#f0a92a; --amber-soft:#3a2f17;
+  --red:#ec6a55; --red-soft:#3d1f1d; --navy:#e8eef7; --approve:#2bb9a5; --review:#f0a92a; --decline:#ec6a55;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 4px 16px rgba(0,0,0,.25);
+}}
+:root[data-theme="dark"]{
+  --bg:#0b1424; --surface:#111d31; --surface-2:#18263d; --ink:#e8eef7; --ink-2:#b4c0d3; --ink-3:#8494ab;
+  --line:#22324c; --teal:#2bb9a5; --teal-soft:#123a3a; --amber:#f0a92a; --amber-soft:#3a2f17;
+  --red:#ec6a55; --red-soft:#3d1f1d; --navy:#e8eef7; --approve:#2bb9a5; --review:#f0a92a; --decline:#ec6a55;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 4px 16px rgba(0,0,0,.25);
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans","Noto Sans Devanagari",sans-serif}
+a{color:var(--teal)}
+header{background:#0d1f3c;color:#fff;padding:14px 24px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+header .brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:17px}
+header .brand svg{flex:none}
+header .tag{font-size:12px;background:#f5a623;color:#0d1f3c;border-radius:999px;padding:2px 10px;font-weight:700;letter-spacing:.02em}
+header .spacer{flex:1}
+header button{background:transparent;border:1px solid rgba(255,255,255,.3);color:#fff;border-radius:8px;padding:6px 10px;cursor:pointer}
+nav{background:var(--surface);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}
+nav .tabs{display:flex;gap:4px;padding:0 16px;overflow-x:auto;max-width:1240px;margin:0 auto}
+nav button{border:0;background:none;color:var(--ink-2);padding:14px 14px;font:inherit;font-weight:600;cursor:pointer;border-bottom:3px solid transparent;white-space:nowrap}
+nav button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--teal)}
+nav button:focus-visible,button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+main{max-width:1240px;margin:0 auto;padding:24px 16px 64px}
+section[hidden]{display:none}
+h1{font-size:26px;margin:0 0 4px;letter-spacing:-.01em}
+h2{font-size:18px;margin:0 0 12px}
+h3{font-size:15px;margin:0 0 8px}
+p.lead{color:var(--ink-2);margin:0 0 20px;max-width:780px}
+.banner{background:var(--amber-soft);border:1px solid color-mix(in srgb,var(--amber) 40%,transparent);color:var(--ink);border-radius:10px;padding:10px 14px;margin-bottom:20px;font-size:14px}
+.grid{display:grid;gap:16px}
+.g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.g4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.split{grid-template-columns:minmax(0,360px) minmax(0,1fr)}
+@media (max-width:900px){.g3,.g4{grid-template-columns:repeat(2,minmax(0,1fr))}.split,.g2{grid-template-columns:1fr}}
+@media (max-width:560px){.g3,.g4{grid-template-columns:1fr}}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow);min-width:0}
+.card.flat{box-shadow:none}
+.muted{color:var(--ink-3)}
+.small{font-size:13px}
+.kpi .v{font-size:28px;font-weight:700;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.kpi .l{font-size:13px;color:var(--ink-2)}
+.kpi .s{font-size:12px;color:var(--ink-3)}
+.chip{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:2px 10px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.03em}
+.chip.approve{background:var(--teal-soft);color:var(--approve)}
+.chip.review,.chip.medium{background:var(--amber-soft);color:var(--review)}
+.chip.decline,.chip.high{background:var(--red-soft);color:var(--decline)}
+.chip.neutral{background:var(--surface-2);color:var(--ink-2)}
+label{display:block;font-size:13px;font-weight:600;color:var(--ink-2);margin:10px 0 4px}
+select,input[type=number],input[type=text],textarea{width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);font:inherit}
+textarea{min-height:90px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.btn{background:var(--teal);color:#fff;border:0;border-radius:8px;padding:10px 16px;font:inherit;font-weight:700;cursor:pointer}
+.btn.secondary{background:var(--surface-2);color:var(--ink)}
+.btn:disabled{opacity:.55;cursor:not-allowed}
+.check{display:flex;gap:8px;align-items:flex-start;margin-top:12px;font-size:14px}
+.check input{margin-top:3px}
+table{width:100%;border-collapse:collapse;font-size:14px;font-variant-numeric:tabular-nums}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:12px;color:var(--ink-3);font-weight:700;text-transform:uppercase;letter-spacing:.03em}
+td.num,th.num{text-align:right}
+.tablewrap{overflow-x:auto}
+.reason{display:grid;grid-template-columns:1fr auto;gap:8px 12px;padding:10px 0;border-bottom:1px solid var(--line)}
+.reason:last-child{border-bottom:0}
+.reason .code{font-size:11px;color:var(--ink-3);font-family:ui-monospace,Menlo,monospace}
+.pts{font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+.pts.neg{color:var(--decline)} .pts.pos{color:var(--approve)}
+.agent{display:flex;flex-direction:column;gap:8px}
+.agent .icon{width:40px;height:40px;border-radius:10px;display:grid;place-items:center;background:var(--teal-soft);color:var(--teal)}
+.agent ul{margin:4px 0 0;padding-left:18px;color:var(--ink-2);font-size:14px}
+.agent .io{font-size:13px;color:var(--ink-2);background:var(--surface-2);border-radius:8px;padding:8px 10px}
+.flow{display:flex;gap:8px;align-items:stretch;flex-wrap:wrap}
+.flow .step{flex:1 1 150px;background:var(--surface-2);border-radius:10px;padding:12px}
+.flow .step b{display:block}
+.flow .arrow{align-self:center;color:var(--ink-3)}
+.lang-tabs{display:flex;gap:6px;margin-bottom:10px}
+.lang-tabs button{border:1px solid var(--line);background:var(--surface);color:var(--ink-2);border-radius:999px;padding:4px 12px;cursor:pointer;font:inherit;font-size:13px}
+.lang-tabs button[aria-pressed="true"]{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+.explain-text{font-size:16px;line-height:1.65;background:var(--surface-2);border-radius:10px;padding:14px 16px;min-height:80px}
+details{margin-top:10px}
+summary{cursor:pointer;color:var(--ink-2);font-size:13px;font-weight:600}
+pre{white-space:pre-wrap;word-break:break-word;background:var(--surface-2);padding:10px;border-radius:8px;font-size:12px;max-height:260px;overflow:auto}
+.empty{color:var(--ink-3);text-align:center;padding:40px 10px}
+.flag{color:var(--decline);font-weight:600}
+svg text{fill:var(--ink-3);font-size:11px}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--ink-2);margin-top:6px}
+.legend i{display:inline-block;width:14px;height:3px;border-radius:2px;vertical-align:middle;margin-right:6px}
+.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--surface);padding:10px 16px;border-radius:10px;font-size:14px;opacity:0;transition:opacity .2s;pointer-events:none;max-width:90vw}
+.toast.show{opacity:1}
+.alert-row td{padding-top:12px;padding-bottom:12px}
+.human{display:flex;gap:10px;align-items:flex-start;background:var(--teal-soft);border-radius:10px;padding:10px 12px;font-size:14px}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">
+    <svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true"><rect width="28" height="28" rx="7" fill="#0f9d8a"/><path d="M7 18h3v4H7zM12.5 13h3v9h-3zM18 8h3v14h-3z" fill="#fff"/><circle cx="21" cy="6" r="2.5" fill="#f5a623"/></svg>
+    Vendor Credit Console
+  </div>
+  <span class="tag">SYNTHETIC DATA</span>
+  <span class="spacer"></span>
+  <span id="health" class="small" style="opacity:.85">checking service…</span>
+  <button id="themeBtn" aria-label="Toggle colour theme">Theme</button>
+</header>
+<nav><div class="tabs" role="tablist">
+  <button role="tab" data-tab="overview" aria-selected="true">Agents</button>
+  <button role="tab" data-tab="score">Score &amp; explain</button>
+  <button role="tab" data-tab="ews">Early warning</button>
+  <button role="tab" data-tab="eval">Model evaluation</button>
+  <button role="tab" data-tab="shadow">Shadow mode</button>
+  <button role="tab" data-tab="audit">Audit log</button>
+</div></nav>
+
+<main>
+<!-- ============================== OVERVIEW ============================== -->
+<section id="tab-overview">
+  <h1>Cash-flow credit for vendors with no credit history</h1>
+  <p class="lead">Four focused agents help an NBFC assess street vendors and small shops from their daily UPI receipts. They support decisions; they do not make them. The lender decides, and a person reviews every case that is not a clear approve.</p>
+  <div class="banner"><b>Everything here runs on synthetic data.</b> No result on this page is real-world accuracy. The model must be validated on a lender's anonymised past loans before any use.</div>
+
+  <div class="card flat" style="margin-bottom:16px">
+    <h3>How a case flows</h3>
+    <div class="flow">
+      <div class="step"><b>1. Consent</b><span class="small muted">Vendor agrees to share UPI receipts. No consent, no score.</span></div>
+      <div class="arrow">→</div>
+      <div class="step"><b>2. Scoring agent</b><span class="small muted">90 to 180 days of UPI → score, band and reasons.</span></div>
+      <div class="arrow">→</div>
+      <div class="step"><b>3. Explanation agent</b><span class="small muted">Plain English and Hindi, grounded in the reasons only.</span></div>
+      <div class="arrow">→</div>
+      <div class="step"><b>4. Lender decides</b><span class="small muted">Review and decline bands always go to a person.</span></div>
+      <div class="arrow">→</div>
+      <div class="step"><b>5. Early warning</b><span class="small muted">Weekly checks after disbursal; a person follows up.</span></div>
+    </div>
+  </div>
+
+  <div class="grid g2" id="agentCards"></div>
+</section>
+
+<!-- ============================== SCORE ============================== -->
+<section id="tab-score" hidden>
+  <h1>Score &amp; explain</h1>
+  <p class="lead">Pick a held-out synthetic vendor, or edit the loan terms, then score. The explanation agent receives <i>only</i> the score output.</p>
+  <div class="grid split">
+    <div class="card">
+      <h2>Application</h2>
+      <label for="vendorSel">Synthetic vendor</label>
+      <select id="vendorSel"><option>loading…</option></select>
+      <div class="grid g2" style="gap:10px">
+        <div><label for="amt">Loan amount (Rs)</label><input id="amt" type="number" min="1000" step="1000"></div>
+        <div><label for="ten">Tenure (months)</label><input id="ten" type="number" min="1" max="60"></div>
+      </div>
+      <label for="emi">EMI (Rs / month)</label><input id="emi" type="number" min="100" step="50">
+      <label for="days">Days of UPI history to send</label>
+      <select id="days"><option value="180">180 days (full)</option><option value="120">120 days</option><option value="90">90 days (minimum)</option><option value="60">60 days (will be rejected)</option></select>
+      <div class="check"><input type="checkbox" id="consent" checked><label for="consent" style="margin:0;font-weight:500;color:var(--ink)">The vendor has given consent to use their UPI records for this assessment.</label></div>
+      <div class="row" style="margin-top:16px"><button class="btn" id="scoreBtn">Score application</button></div>
+      <p class="small muted" id="outcomeNote" style="margin-top:12px"></p>
+    </div>
+    <div class="grid" style="align-content:start">
+      <div class="card" id="scoreCard"><div class="empty">Score an application to see the result.</div></div>
+      <div class="card"><h3>Daily UPI receipts sent</h3><div id="inflowChart"></div>
+        <div class="legend"><span><i style="background:var(--teal);opacity:.45;height:8px"></i>Daily inflow</span><span><i style="background:var(--ink)"></i>7-day average</span><span><i style="background:var(--amber)"></i>EMI ÷ 30 (daily equivalent)</span></div></div>
+      <div class="card" id="explainCard" hidden></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================== EWS ============================== -->
+<section id="tab-ews" hidden>
+  <h1>Early-warning queue</h1>
+  <p class="lead">Every week, each active loan's last 4 weeks of UPI income are compared with that vendor's own median week over the previous 12. Flags are for a person to act on. The agent never contacts the borrower.</p>
+  <div class="grid g4" id="ewsKpis" style="margin-bottom:16px"></div>
+  <div class="card">
+    <div class="row" style="justify-content:space-between;margin-bottom:8px">
+      <div class="row"><label for="asof" style="margin:0">Week ending day</label>
+        <input id="asof" type="range" min="217" max="540" step="7" value="300" style="width:220px">
+        <b id="asofVal">300</b></div>
+      <div class="human"><span aria-hidden="true">👤</span><span>Suggested actions are for staff. No automatic calls, messages or visits.</span></div>
+    </div>
+    <div class="tablewrap"><table><thead><tr><th>Vendor</th><th>Severity</th><th>Last 16 weeks</th><th>Why flagged</th><th>Suggested human action</th></tr></thead><tbody id="ewsBody"><tr><td colspan="5" class="empty">Loading…</td></tr></tbody></table></div>
+  </div>
+</section>
+
+<!-- ============================== EVAL ============================== -->
+<section id="tab-eval" hidden>
+  <h1>Model evaluation</h1>
+  <p class="lead">Hold-out test set, compared with the simple rule a lender might use today: approve if monthly UPI income is at least 3 times the EMI.</p>
+  <div class="banner">Synthetic data. These results show the method works end to end. They are not evidence of real-world accuracy.</div>
+  <div class="grid g4" id="evalKpis" style="margin-bottom:16px"></div>
+  <div class="grid g2" style="margin-bottom:16px">
+    <div class="card"><h3>Approval rate vs default rate among approved</h3><div id="approvalChart"></div>
+      <div class="legend"><span><i style="background:var(--teal)"></i>Model</span><span><i style="background:var(--ink-3)"></i>Ranking by income ÷ EMI only</span><span><i style="background:var(--amber);height:10px;width:10px;border-radius:50%"></i>Baseline rule (3× EMI)</span></div></div>
+    <div class="card"><h3>Calibration by decile</h3><div id="calChart"></div>
+      <div class="legend"><span><i style="background:var(--teal);height:8px"></i>Predicted PD</span><span><i style="background:var(--amber);height:8px"></i>Observed default rate</span></div></div>
+  </div>
+  <div class="grid g2" style="margin-bottom:16px">
+    <div class="card"><h3>Against the baseline rule</h3><div id="vsBase"></div></div>
+    <div class="card"><h3>Bands</h3><div id="bandTable"></div></div>
+  </div>
+  <div class="card" style="margin-bottom:16px"><h3>Segments</h3><p class="small muted">Flagged when AUC is more than 0.05 below overall, or there are too few defaults to judge.</p><div id="segTables"></div></div>
+  <div class="card"><h3>Bias check: cash-heavy sellers <span class="chip neutral">uses a hidden synthetic trait</span></h3><div id="biasTable"></div></div>
+</section>
+
+<!-- ============================== SHADOW ============================== -->
+<section id="tab-shadow" hidden>
+  <h1>Shadow mode</h1>
+  <p class="lead">Compare the model and the baseline rule with what the lender actually decided on past loans. Read-only: no real decision is changed.</p>
+  <div class="grid split">
+    <div class="card">
+      <h2>Inputs</h2>
+      <p class="small muted">Loans CSV: <code>vendor_id, emi, lender_decision, default_12m</code> (outcome blank for declined). Daily CSV: <code>vendor_id, day, n_txn, inflow</code>.</p>
+      <label for="loansFile">Loans CSV</label><input type="file" id="loansFile" accept=".csv">
+      <label for="dailyFile">Daily UPI CSV</label><input type="file" id="dailyFile" accept=".csv">
+      <div class="row" style="margin-top:14px"><button class="btn" id="shadowRun">Run on my files</button><button class="btn secondary" id="shadowSample">Use synthetic sample</button></div>
+      <p class="small muted" style="margin-top:10px">Sample files: <a href="/shadow/sample.csv?kind=loans">loans</a> · <a href="/shadow/sample.csv?kind=daily">daily</a></p>
+    </div>
+    <div class="card" id="shadowOut"><div class="empty">Run a shadow report to see the comparison.</div></div>
+  </div>
+</section>
+
+<!-- ============================== AUDIT ============================== -->
+<section id="tab-audit" hidden>
+  <h1>Audit log</h1>
+  <p class="lead">Every request and response is appended to a hash-chained log. Vendor IDs are stored only as salted hashes, and raw income records are never stored.</p>
+  <div class="card"><div class="row" style="justify-content:space-between;margin-bottom:10px"><div id="chainStatus"></div><button class="btn secondary" id="auditRefresh">Refresh</button></div>
+  <div class="tablewrap"><table><thead><tr><th>Time (UTC)</th><th>Event</th><th>Status</th><th>Vendor hash</th><th>Result</th><th>Model</th></tr></thead><tbody id="auditBody"></tbody></table></div></div>
+</section>
+</main>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+const $ = s => document.querySelector(s);
+const fmt = (n, d=0) => Number(n).toLocaleString('en-IN', {maximumFractionDigits:d, minimumFractionDigits:d});
+const pct = (n, d=1) => n == null ? '–' : (n*100).toFixed(d) + '%';
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function toast(msg){ const t=$('#toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove('show'),3200); }
+async function api(path, opts={}){
+  const r = await fetch(path, {headers:{'Content-Type':'application/json'}, ...opts});
+  let body = null; try { body = await r.json(); } catch(e) {}
+  if (!r.ok) { const e = new Error((body && (body.detail?.toString?.() || body.detail)) || r.statusText); e.status=r.status; e.body=body; throw e; }
+  return body;
+}
+
+/* ---------- theme ---------- */
+(function(){ let t=null; try{ t=localStorage.getItem('vc-theme'); }catch(e){} if(t) document.documentElement.dataset.theme=t; })();
+$('#themeBtn').onclick = () => {
+  const dark = matchMedia('(prefers-color-scheme: dark)').matches;
+  const cur = document.documentElement.dataset.theme || (dark ? 'dark' : 'light');
+  const next = cur === 'dark' ? 'light' : 'dark';
+  document.documentElement.dataset.theme = next; try{ localStorage.setItem('vc-theme', next); }catch(e){}
+};
+
+/* ---------- tabs ---------- */
+const loaded = {};
+document.querySelectorAll('nav button').forEach(b => b.onclick = () => showTab(b.dataset.tab));
+function showTab(name){
+  document.querySelectorAll('nav button').forEach(b => b.setAttribute('aria-selected', b.dataset.tab === name));
+  document.querySelectorAll('main > section').forEach(s => s.hidden = s.id !== 'tab-' + name);
+  try{ localStorage.setItem('vc-tab', name); }catch(e){}
+  if (!loaded[name]) { loaded[name] = true; ({score:initScore, ews:loadEws, eval:loadEval, audit:loadAudit})[name]?.(); }
+}
+
+/* ---------- SVG helpers ---------- */
+const NS='http://www.w3.org/2000/svg';
+function svg(w,h){ const s=document.createElementNS(NS,'svg'); s.setAttribute('viewBox',`0 0 ${w} ${h}`); s.setAttribute('width','100%'); s.setAttribute('role','img'); return s; }
+function el(tag, attrs, parent){ const e=document.createElementNS(NS,tag); for(const k in attrs) e.setAttribute(k, attrs[k]); parent && parent.appendChild(e); return e; }
+function text(parent, x, y, str, anchor='start'){ const t=el('text',{x,y,'text-anchor':anchor},parent); t.textContent=str; return t; }
+function css(v){ return getComputedStyle(document.documentElement).getPropertyValue(v).trim(); }
+
+function lineChart(container, series, opts){
+  const W=560,H=260,m={l:44,r:12,t:10,b:30}; const s=svg(W,H);
+  const xs=opts.x, ys=opts.y, X=v=>m.l+(v-xs[0])/(xs[1]-xs[0])*(W-m.l-m.r), Y=v=>H-m.b-(v-ys[0])/(ys[1]-ys[0])*(H-m.t-m.b);
+  for(const t of opts.yTicks){ el('line',{x1:m.l,x2:W-m.r,y1:Y(t),y2:Y(t),stroke:css('--line')},s); text(s,m.l-6,Y(t)+4,opts.yFmt(t),'end'); }
+  for(const t of opts.xTicks){ text(s,X(t),H-10,opts.xFmt(t),'middle'); }
+  for(const se of series){
+    if(se.points.length>1){ el('path',{d:se.points.map((p,i)=>(i?'L':'M')+X(p[0]).toFixed(1)+','+Y(p[1]).toFixed(1)).join(''),fill:'none',stroke:se.color,'stroke-width':se.width||2.5,'stroke-dasharray':se.dash||''},s); }
+    if(se.dot){ for(const p of se.points){ const c=el('circle',{cx:X(p[0]),cy:Y(p[1]),r:6,fill:se.color,stroke:css('--surface'),'stroke-width':2},s); const tt=el('title',{},c); tt.textContent=se.label+': '+opts.xFmt(p[0])+' approved, '+opts.yFmt(p[1])+' default'; } }
+  }
+  container.innerHTML=''; container.appendChild(s);
+}
+
+function barPairs(container, rows){
+  const W=560,H=260,m={l:44,r:12,t:10,b:30}; const s=svg(W,H);
+  const max=Math.max(...rows.flatMap(r=>[r.a,r.b]))*1.15; const Y=v=>H-m.b-v/max*(H-m.t-m.b);
+  const step=(W-m.l-m.r)/rows.length, bw=Math.min(18,step/2.6);
+  for(let t=0;t<=max;t+=max>0.3?0.1:0.05){ el('line',{x1:m.l,x2:W-m.r,y1:Y(t),y2:Y(t),stroke:css('--line')},s); text(s,m.l-6,Y(t)+4,(t*100).toFixed(0)+'%','end'); }
+  rows.forEach((r,i)=>{ const cx=m.l+step*i+step/2;
+    const a=el('rect',{x:cx-bw-1,y:Y(r.a),width:bw,height:Y(0)-Y(r.a),fill:css('--teal'),rx:3},s); el('title',{},a).textContent=`Decile ${r.k}: predicted ${pct(r.a)}`;
+    const b=el('rect',{x:cx+1,y:Y(r.b),width:bw,height:Y(0)-Y(r.b),fill:css('--amber'),rx:3},s); el('title',{},b).textContent=`Decile ${r.k}: observed ${pct(r.b)}`;
+    text(s,cx,H-10,String(r.k),'middle'); });
+  container.innerHTML=''; container.appendChild(s);
+}
+
+function sparkline(values, base){
+  const W=150,H=36,max=Math.max(...values, base||0, 1); const s=svg(W,H); s.setAttribute('width','150'); s.setAttribute('height','36');
+  const bw=W/values.length;
+  values.forEach((v,i)=>{ const h=v/max*(H-4); el('rect',{x:i*bw+1,y:H-h,width:bw-2,height:Math.max(h,1),fill:i>=values.length-4?css('--decline'):css('--teal'),opacity:i>=values.length-4?0.85:0.55,rx:1.5},s); });
+  if(base){ const y=H-base/max*(H-4); el('line',{x1:0,x2:W,y1:y,y2:y,stroke:css('--ink'),'stroke-dasharray':'3 3','stroke-width':1},s); }
+  const t=el('title',{},s); t.textContent='Weekly UPI income, last 16 weeks (red = last 4). Dashed line = 12-week median.';
+  return s.outerHTML;
+}
+
+/* ---------- OVERVIEW ---------- */
+const AGENTS = [
+  {name:'Scoring agent', icon:'M4 17h3v3H4zM9 12h3v8H9zM14 7h3v13h-3z', what:'Turns 90 to 180 days of UPI receipts into a probability of default, a 300 to 900 score and a suggested band, with plain reason codes.',
+   input:'Consent flag, loan terms, daily UPI records', output:'PD, score, band (approve / review / decline), top reasons and strengths',
+   guard:['Explainable logistic regression; coefficients are public via /model-info','Every coefficient sign is checked in tests (more income vs EMI never raises risk)','Rejects requests without consent or with fewer than 90 days']},
+  {name:'Explanation agent', icon:'M4 5h16v10H8l-4 4z', what:'Writes a short, kind explanation for the vendor in English and Hindi, from the score output only.',
+   input:'Only the score, band and reason texts (no ID, no raw income)', output:'Two short paragraphs plus a validator report',
+   guard:['LLM behind a provider-agnostic interface, with a template fallback','A validator rejects any number or claim not in the input','No approval promises and no tips for gaming the score']},
+  {name:'Early-warning agent', icon:'M12 3l9 16H3zM12 9v4M12 16v.5', what:'Runs weekly on active loans. Flags sustained dips against the vendor\'s own normal, and long dry spells, before a payment is missed.',
+   input:'Weekly UPI totals per active loan', output:'Severity, reason, suggested action for a person',
+   guard:['Never contacts the borrower automatically','Compares each vendor with their own history, not a fixed amount','Lead time, precision and recall are reported']},
+  {name:'Shadow-mode agent', icon:'M3 12s3-6 9-6 9 6 9 6-3 6-9 6-9-6-9-6zM12 9a3 3 0 100 6 3 3 0 000-6z', what:'Replays past loans and compares the model and the baseline rule with what the lender actually decided.',
+   input:'CSV of past loans with decisions and outcomes, plus UPI records', output:'Agreement, default rates by band, swap-out analysis',
+   guard:['Read-only: no real decision changes','Uses outcomes only where they are known (approved loans)','Always reports the baseline rule alongside the model']},
+];
+$('#agentCards').innerHTML = AGENTS.map(a => `
+  <div class="card agent">
+    <div class="row"><div class="icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="${a.icon}"/></svg></div><h2 style="margin:0">${a.name}</h2></div>
+    <div>${a.what}</div>
+    <div class="io"><b>In:</b> ${a.input}<br><b>Out:</b> ${a.output}</div>
+    <ul>${a.guard.map(g=>`<li>${g}</li>`).join('')}</ul>
+  </div>`).join('') + `
+  <div class="card agent" style="grid-column:1/-1;background:var(--teal-soft);border-color:transparent">
+    <div class="row"><div class="icon" style="background:var(--surface)"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/></svg></div><h2 style="margin:0">Human review stays in charge</h2></div>
+    <div>Review and decline bands, disputes, hardship and large loans always go to a person. Agents prepare the case; staff decide and make every contact with the borrower.</div>
+  </div>`;
+
+/* ---------- SCORE ---------- */
+let demoCache = {}, lastScore = null;
+async function initScore(){
+  try{
+    const vs = await api('/demo/vendors?limit=60');
+    $('#vendorSel').innerHTML = vs.map(v=>`<option value="${v.vendor_id}">${v.vendor_id} · ${v.vendor_type.replace('_',' ')} · EMI Rs ${fmt(v.emi)}</option>`).join('');
+    $('#vendorSel').onchange = loadVendor; await loadVendor();
+  }catch(e){ $('#vendorSel').innerHTML='<option>demo data unavailable</option>'; toast('Could not load demo vendors: '+e.message); }
+}
+async function loadVendor(){
+  const id=$('#vendorSel').value; if(!demoCache[id]) demoCache[id]=await api('/demo/vendor/'+encodeURIComponent(id));
+  const d=demoCache[id], p=d.payload; $('#amt').value=p.loan.amount; $('#ten').value=p.loan.tenure_months; $('#emi').value=p.loan.emi;
+  $('#outcomeNote').textContent = `Synthetic ground truth for this vendor: ${d.synthetic_outcome.default_12m ? 'defaulted' : 'repaid'} within 12 months. Shown for the demo only; a lender would not know this when deciding.`;
+  drawInflow(p.daily_records.slice(-Number($('#days').value)), Number($('#emi').value));
+}
+$('#days').onchange = () => { const d=demoCache[$('#vendorSel').value]; if(d) drawInflow(d.payload.daily_records.slice(-Number($('#days').value)), Number($('#emi').value)); };
+function drawInflow(recs, emi){
+  const W=640,H=200,m={l:48,r:10,t:8,b:24}; const s=svg(W,H); const vals=recs.map(r=>r.inflow);
+  const avg=vals.map((_,i)=>{ const a=vals.slice(Math.max(0,i-6),i+1); return a.reduce((x,y)=>x+y,0)/a.length; });
+  const max=Math.max(...vals, emi/30, 1)*1.1; const bw=(W-m.l-m.r)/vals.length; const Y=v=>H-m.b-v/max*(H-m.t-m.b);
+  const step = max>8000?2000:max>4000?1000:500;
+  for(let t=0;t<=max;t+=step){ el('line',{x1:m.l,x2:W-m.r,y1:Y(t),y2:Y(t),stroke:css('--line')},s); text(s,m.l-6,Y(t)+4,'₹'+fmt(t),'end'); }
+  vals.forEach((v,i)=>{ el('rect',{x:m.l+i*bw,y:Y(v),width:Math.max(bw-0.5,0.5),height:Y(0)-Y(v),fill:v>0?css('--teal'):css('--decline'),opacity:v>0?0.4:1},s); if(v===0) el('rect',{x:m.l+i*bw,y:Y(0)-3,width:Math.max(bw-0.5,0.5),height:3,fill:css('--decline')},s); });
+  el('path',{d:avg.map((v,i)=>(i?'L':'M')+(m.l+i*bw+bw/2).toFixed(1)+','+Y(v).toFixed(1)).join(''),fill:'none',stroke:css('--ink'),'stroke-width':1.8},s);
+  el('line',{x1:m.l,x2:W-m.r,y1:Y(emi/30),y2:Y(emi/30),stroke:css('--amber'),'stroke-width':2,'stroke-dasharray':'6 4'},s);
+  text(s,m.l,H-6,`${vals.length} days ago`); text(s,W-m.r,H-6,'latest day','end');
+  $('#inflowChart').innerHTML=''; $('#inflowChart').appendChild(s);
+}
+$('#scoreBtn').onclick = async () => {
+  const d=demoCache[$('#vendorSel').value]; if(!d) return;
+  const btn=$('#scoreBtn'); btn.disabled=true; btn.textContent='Scoring…';
+  const recs=d.payload.daily_records.slice(-Number($('#days').value));
+  const body={...d.payload, consent_given:$('#consent').checked, daily_records:recs,
+    loan:{amount:Number($('#amt').value), tenure_months:Number($('#ten').value), emi:Number($('#emi').value)}};
+  drawInflow(recs, Number($('#emi').value));
+  try{ const r=await api('/score',{method:'POST',body:JSON.stringify(body)}); lastScore=r; renderScore(r); explainScore(r); }
+  catch(e){ $('#scoreCard').innerHTML=`<h2>Not scored</h2><div class="banner" style="background:var(--red-soft);border-color:transparent;margin:0"><b>${e.status===403?'Consent required':'Request rejected'}</b><br>${esc(e.message)}</div><p class="small muted">The rejection was written to the audit log.</p>`; $('#explainCard').hidden=true; }
+  finally{ btn.disabled=false; btn.textContent='Score application'; }
+};
+function gauge(score){
+  const W=520,H=58; const s=svg(W,H); const X=v=>10+(v-300)/600*(W-20);
+  const bands = window._bands || {decline_below:535, approve_min:575};
+  [[300,bands.decline_below,'--decline'],[bands.decline_below,bands.approve_min,'--review'],[bands.approve_min,900,'--approve']].forEach(([a,b,c])=>el('rect',{x:X(a),y:18,width:X(b)-X(a),height:12,fill:css(c),opacity:.85},s));
+  [300,bands.decline_below,bands.approve_min,900].forEach(v=>text(s,X(v),48,String(v),'middle'));
+  el('path',{d:`M${X(score)-7},4 L${X(score)+7},4 L${X(score)},16 Z`,fill:css('--ink')},s);
+  el('line',{x1:X(score),x2:X(score),y1:14,y2:34,stroke:css('--ink'),'stroke-width':2.5},s);
+  return s.outerHTML;
+}
+function reasonRow(r){ const neg=r.direction==='increases_risk';
+  return `<div class="reason"><div><div>${esc(r.text_en)}</div><div class="code">${r.code}</div></div><div class="pts ${neg?'neg':'pos'}">${r.impact_points>0?'+':''}${r.impact_points} pts</div></div>`; }
+function renderScore(r){
+  const label={approve:'Suggested: approve',review:'Suggested: human review',decline:'Suggested: decline (human review)'}[r.band];
+  $('#scoreCard').innerHTML = `
+    <div class="row" style="justify-content:space-between;align-items:flex-start">
+      <div><div class="muted small">Cash-flow score</div><div style="font-size:44px;font-weight:800;letter-spacing:-.03em;line-height:1.1">${r.score}</div></div>
+      <div style="text-align:right"><span class="chip ${r.band}">${label}</span><div class="small muted" style="margin-top:6px">Probability of default ${pct(r.probability_of_default)}</div><div class="small muted">${r.days_used} days · EMI Rs ${fmt(r.emi_used)}</div></div>
+    </div>
+    ${gauge(r.score)}
+    ${r.human_review_required?`<div class="human" style="margin:6px 0 12px"><span aria-hidden="true">👤</span><span><b>Human review required.</b> This case is not a clear approve, so a credit officer must look at it.</span></div>`:''}
+    <div class="grid g2" style="gap:18px">
+      <div><h3>What raised risk</h3>${r.reasons.length?r.reasons.map(reasonRow).join(''):'<p class="muted small">No factor raised risk meaningfully.</p>'}</div>
+      <div><h3>What helped</h3>${r.strengths.length?r.strengths.map(reasonRow).join(''):'<p class="muted small">No strong positive factor.</p>'}</div>
+    </div>
+    <p class="small muted" style="margin:12px 0 0">${esc(r.decision_note)} ${esc(r.data_note)} Model ${esc(r.model_version)}.</p>`;
+}
+async function explainScore(r){
+  const c=$('#explainCard'); c.hidden=false; c.innerHTML='<h2>Explanation for the vendor</h2><div class="explain-text muted">Writing…</div>';
+  try{
+    const x=await api('/explain',{method:'POST',body:JSON.stringify(r)});
+    const src = x.source==='llm' ? `<span class="chip approve">LLM · validated</span>` : `<span class="chip neutral">Template${x.llm_attempt?.used?' · LLM output rejected':''}</span>`;
+    c.innerHTML = `<div class="row" style="justify-content:space-between"><h2 style="margin:0">Explanation for the vendor</h2>${src}</div>
+      <div class="lang-tabs" role="group" aria-label="Language" style="margin-top:12px"><button aria-pressed="true" data-l="en">English</button><button aria-pressed="false" data-l="hi">हिन्दी</button></div>
+      <div class="explain-text" id="exText" lang="en">${esc(x.en)}</div>
+      <p class="small muted" style="margin:8px 0 0">Grounding check: ${x.validator.ok?'passed: every number and claim comes from the score output.':'failed: '+esc(x.validator.problems.join('; '))}</p>
+      <details><summary>Exactly what the explanation agent received (no ID, no raw income)</summary><pre>${esc(JSON.stringify(x.llm_input,null,2))}</pre></details>
+      ${x.llm_attempt?.used && x.source!=='llm'?`<details><summary>Why the LLM draft was not used</summary><pre>${esc(JSON.stringify(x.llm_attempt,null,2))}</pre></details>`:''}`;
+    c.querySelectorAll('.lang-tabs button').forEach(b=>b.onclick=()=>{ c.querySelectorAll('.lang-tabs button').forEach(o=>o.setAttribute('aria-pressed',o===b)); const t=$('#exText'); t.textContent=x[b.dataset.l]; t.lang=b.dataset.l; });
+  }catch(e){ c.innerHTML='<h2>Explanation</h2><p class="flag">Could not generate an explanation: '+esc(e.message)+'</p>'; }
+}
+
+/* ---------- EWS ---------- */
+let ewsTimer=null;
+$('#asof').oninput = () => { $('#asofVal').textContent=$('#asof').value; clearTimeout(ewsTimer); ewsTimer=setTimeout(loadQueue,250); };
+async function loadEws(){
+  try{
+    const r=await api('/reports/early_warning'); const vl=r.vendor_level, lt=r.lead_time_days;
+    $('#ewsKpis').innerHTML = [
+      ['Recall', pct(vl.recall), 'defaulters flagged before the first missed EMI'],
+      ['Precision', pct(vl.precision), `flagged vendors who later missed (base rate ${pct(vl.base_default_rate)})`],
+      ['Median lead time', lt.median+' days', `IQR ${lt.p25}–${lt.p75} days`],
+      ['Good payers flagged', pct(vl.good_payers_flagged_share), 'at least once in 12 months'],
+    ].map(([l,v,s])=>`<div class="card kpi"><div class="l">${l}</div><div class="v">${v}</div><div class="s">${s}</div></div>`).join('');
+  }catch(e){ $('#ewsKpis').innerHTML='<div class="card muted">Run <code>make reports</code> to see early-warning metrics.</div>'; }
+  loadQueue();
+}
+async function loadQueue(){
+  const body=$('#ewsBody'); body.innerHTML='<tr><td colspan="5" class="empty">Running the weekly job…</td></tr>';
+  try{
+    const r=await api('/ews/queue?as_of_day='+$('#asof').value);
+    if(!r.alerts.length){ body.innerHTML='<tr><td colspan="5" class="empty">No alerts this week.</td></tr>'; return; }
+    body.innerHTML = r.alerts.slice(0,80).map(a=>`<tr class="alert-row"><td><b>${a.vendor_id}</b><div class="small muted">${a.recent_vs_baseline_pct}% of usual</div></td>
+      <td><span class="chip ${a.severity}">${a.severity}</span><div class="small muted" style="margin-top:4px">${a.flags.map(f=>f.replace(/_/g,' ')).join(', ')}</div></td>
+      <td>${sparkline(a.weekly_history, a.baseline_weekly_median)}</td><td class="small">${esc(a.reason)}</td><td class="small">${esc(a.suggested_action)}</td></tr>`).join('')
+      + (r.alerts.length>80?`<tr><td colspan="5" class="small muted">Showing 80 of ${r.alerts.length} alerts, high severity first.</td></tr>`:'');
+  }catch(e){ body.innerHTML=`<tr><td colspan="5" class="empty">${esc(e.message)}</td></tr>`; }
+}
+
+/* ---------- EVAL ---------- */
+async function loadEval(){
+  let r; try{ r=await api('/reports/evaluation'); }catch(e){ $('#evalKpis').innerHTML='<div class="card muted">Run <code>make reports</code> first.</div>'; return; }
+  const lr=r.logistic_regression, gb=r.gradient_boosting_comparison, bl=r.baseline_rule, vs=r.vs_baseline;
+  const g=vs.auc_gain_vs_rule_binary, g2=vs.auc_gain_vs_ratio_ranking;
+  $('#evalKpis').innerHTML = [
+    ['AUC: logistic regression', lr.auc.toFixed(3), `KS ${lr.ks.toFixed(3)} · Brier ${lr.brier.toFixed(4)}`],
+    ['AUC: gradient boosting', gb.auc.toFixed(3), 'comparison only, not used to decide'],
+    ['AUC: baseline rule', bl.auc_rule_as_binary.toFixed(3), `ratio as a ranking: ${bl.auc_ratio_as_ranking.toFixed(3)}`],
+    ['AUC gain vs rule', (g.gain>=0?'+':'')+g.gain.toFixed(3), `95% CI ${g.ci95_low.toFixed(3)} to ${g.ci95_high.toFixed(3)}`],
+  ].map(([l,v,s])=>`<div class="card kpi"><div class="l">${l}</div><div class="v">${v}</div><div class="s">${s}</div></div>`).join('');
+  const curve=r.approval_vs_default_curve;
+  const ymax=Math.ceil(Math.max(...curve.model.map(p=>p.default_rate_approved), ...curve.ratio_ranking_baseline.map(p=>p.default_rate_approved))*100/2)*2/100;
+  lineChart($('#approvalChart'), [
+    {points:curve.ratio_ranking_baseline.map(p=>[p.approval_rate,p.default_rate_approved]), color:css('--ink-3'), dash:'5 4', width:2, label:'Ratio only'},
+    {points:curve.model.map(p=>[p.approval_rate,p.default_rate_approved]), color:css('--teal'), label:'Model'},
+    {points:[[curve.baseline_rule_point.approval_rate, curve.baseline_rule_point.default_rate_approved]], color:css('--amber'), dot:true, label:'Baseline rule'},
+  ], {x:[0,1], y:[0,ymax], xTicks:[0,.25,.5,.75,1], yTicks:[0,ymax/4,ymax/2,3*ymax/4,ymax], xFmt:v=>(v*100).toFixed(0)+'%', yFmt:v=>(v*100).toFixed(1)+'%'});
+  barPairs($('#calChart'), r.calibration_by_decile.map(c=>({k:c.decile,a:c.mean_predicted_pd,b:c.observed_default_rate})));
+  const s1=vs.same_approval_rate, s2=vs.same_default_rate;
+  $('#vsBase').innerHTML = `<p class="small muted" style="margin-top:0">Rule: ${esc(bl.rule)}. It approves ${pct(bl.approval_rate)} with ${pct(bl.default_rate_approved,2)} defaults among approved.</p>
+    <table><tbody>
+    <tr><td>At the same approval rate (${pct(s1.approval_rate)})</td><td class="num">model ${pct(s1.model_default_rate,2)} vs rule ${pct(s1.baseline_default_rate,2)} defaults</td></tr>
+    <tr><td>At the same default rate (${pct(s2.default_rate,2)})</td><td class="num">model approves ${pct(s2.model_approval_rate)} vs ${pct(s2.baseline_approval_rate)} (${s2.extra_approvals_per_1000_applicants>=0?'+':''}${s2.extra_approvals_per_1000_applicants} per 1,000)</td></tr>
+    <tr><td>AUC gain vs ranking by the ratio alone</td><td class="num">${g2.gain>=0?'+':''}${g2.gain.toFixed(3)} (CI ${g2.ci95_low.toFixed(3)} to ${g2.ci95_high.toFixed(3)})</td></tr>
+    <tr><td>Gradient boosting minus logistic regression</td><td class="num">${vs.gbm_auc_gain_vs_lr.gain.toFixed(3)} (CI ${vs.gbm_auc_gain_vs_lr.ci95_low.toFixed(3)} to ${vs.gbm_auc_gain_vs_lr.ci95_high.toFixed(3)})</td></tr>
+    </tbody></table>
+    <p class="small muted">Honest read: most of the lift over the 0/1 rule comes from <i>ranking</i> by income relative to EMI. The extra features add only a little on this synthetic data, and that gain's interval includes zero.</p>`;
+  $('#bandTable').innerHTML = `<table><thead><tr><th>Band</th><th class="num">Share</th><th class="num">Default rate</th><th class="num">Scores</th></tr></thead><tbody>${r.bands.map(b=>`<tr><td><span class="chip ${b.band}">${b.band}</span></td><td class="num">${pct(b.share)}</td><td class="num">${pct(b.default_rate,2)}</td><td class="num">${b.score_min}–${b.score_max}</td></tr>`).join('')}</tbody></table>
+    <p class="small muted">Thresholds are set in <code>config/model_config.yaml</code>. Review and decline both go to a person.</p>`;
+  $('#segTables').innerHTML = Object.entries(r.segments).map(([k,rows])=>`<h3 style="margin-top:12px">By ${k.replace('_',' ')}</h3><div class="tablewrap"><table><thead><tr><th>Segment</th><th class="num">n</th><th class="num">Defaults</th><th class="num">Default rate</th><th class="num">AUC</th><th class="num">Approve share</th><th>Flags</th></tr></thead><tbody>${rows.map(s=>`<tr><td>${esc(s.segment.replace(/_/g,' '))}</td><td class="num">${s.n}</td><td class="num">${s.defaults}</td><td class="num">${pct(s.default_rate)}</td><td class="num">${s.auc??'–'}</td><td class="num">${pct(s.approve_share)}</td><td class="${s.weak?'flag':'muted'} small">${s.flags.join('; ')||'–'}</td></tr>`).join('')}</tbody></table></div>`).join('');
+  const b=r.bias_check_cash_share;
+  $('#biasTable').innerHTML = `<div class="tablewrap"><table><thead><tr><th>Cash share of sales</th><th class="num">n</th><th class="num">Actual default rate</th><th class="num">Approve band</th><th class="num">Decline band</th></tr></thead><tbody>${b.map(s=>`<tr><td>${s.segment}</td><td class="num">${s.n}</td><td class="num">${pct(s.actual_default_rate)}</td><td class="num">${pct(s.approve_share)}</td><td class="num">${pct(s.decline_share)}</td></tr>`).join('')}</tbody></table></div>
+    <div class="banner" style="margin:12px 0 0"><b>Known weakness.</b> Cash-heavy sellers repay about as well as others, but UPI shows only part of their income, so the model sends far more of them to decline. Mitigations to test: a declared cash-sales field verified by a field visit, bank-statement deposits, or a band adjustment reviewed by the lender's risk team.</div>`;
+}
+
+/* ---------- SHADOW ---------- */
+async function readFile(input){ const f=input.files[0]; if(!f) throw new Error('choose both CSV files'); return await f.text(); }
+$('#shadowRun').onclick = async () => { try{ const loans=await readFile($('#loansFile')), daily=await readFile($('#dailyFile')); runShadow(loans,daily); }catch(e){ toast(e.message); } };
+$('#shadowSample').onclick = async () => {
+  $('#shadowOut').innerHTML='<div class="empty">Loading sample files…</div>';
+  try{ const [l,d]=await Promise.all([fetch('/shadow/sample.csv?kind=loans').then(r=>{ if(!r.ok) throw new Error('sample not generated'); return r.text(); }), fetch('/shadow/sample.csv?kind=daily').then(r=>r.text())]); runShadow(l,d); }
+  catch(e){ $('#shadowOut').innerHTML='<div class="empty">'+esc(e.message)+'</div>'; }
+};
+async function runShadow(loans_csv, daily_csv){
+  $('#shadowOut').innerHTML='<div class="empty">Replaying past loans…</div>';
+  try{
+    const r=await api('/shadow/report',{method:'POST',body:JSON.stringify({loans_csv,daily_csv})});
+    const i=r.inputs, m=r.model, b=r.baseline_rule, ms=m.if_decline_band_applied_to_lender_approvals, bs=b.if_applied_to_lender_approvals, ld=r.lender_declines;
+    $('#shadowOut').innerHTML = `<div class="human" style="margin-bottom:12px"><span aria-hidden="true">🔒</span><span>${esc(r.notice)}</span></div>
+      <div class="grid g3" style="margin-bottom:14px">
+        <div class="kpi"><div class="l">Loans replayed</div><div class="v">${fmt(i.scored)}</div><div class="s">${i.not_scored_insufficient_history} skipped (too little history)</div></div>
+        <div class="kpi"><div class="l">Lender approval rate</div><div class="v">${pct(r.lender.approval_rate)}</div><div class="s">${fmt(i.approved_with_known_outcome)} with known outcome</div></div>
+        <div class="kpi"><div class="l">Lender default rate</div><div class="v">${pct(r.lender.default_rate_of_approvals,2)}</div><div class="s">on its approvals</div></div>
+      </div>
+      <h3>If applied to the loans the lender approved</h3>
+      <div class="tablewrap"><table><thead><tr><th></th><th class="num">Would decline</th><th class="num">Their default rate</th><th class="num">Rest's default rate</th><th class="num">Defaults avoided</th><th class="num">Good loans lost</th><th class="num">AUC</th></tr></thead><tbody>
+      <tr><td><b>Model</b> (decline band)</td><td class="num">${ms.lender_approvals_this_would_have_declined}</td><td class="num">${pct(ms.their_default_rate,2)}</td><td class="num">${pct(ms.default_rate_of_the_rest,2)}</td><td class="num">${ms.defaults_avoided}</td><td class="num">${ms.good_loans_lost}</td><td class="num">${m.auc_on_lender_approvals??'–'}</td></tr>
+      <tr><td><b>Baseline rule</b></td><td class="num">${bs.lender_approvals_this_would_have_declined}</td><td class="num">${pct(bs.their_default_rate,2)}</td><td class="num">${pct(bs.default_rate_of_the_rest,2)}</td><td class="num">${bs.defaults_avoided}</td><td class="num">${bs.good_loans_lost}</td><td class="num">${b.auc_on_lender_approvals??'–'}</td></tr>
+      </tbody></table></div>
+      <h3 style="margin-top:16px">Default rate by model band (lender approvals)</h3>
+      <table><tbody>${m.default_rate_by_band_among_lender_approvals.map(x=>`<tr><td><span class="chip ${x.band}">${x.band}</span></td><td class="num">n = ${x.n}</td><td class="num">${pct(x.default_rate,2)}</td></tr>`).join('')}</tbody></table>
+      <h3 style="margin-top:16px">Loans the lender declined (${ld.count})</h3>
+      <p class="small">Model: ${ld.model_would_approve} approve, ${ld.model_would_review} review. Baseline rule: ${ld.baseline_would_approve} approve.</p>
+      <p class="small muted">${esc(ld.note)}</p>`;
+  }catch(e){ $('#shadowOut').innerHTML='<div class="empty flag">'+esc(e.message)+'</div>'; }
+}
+
+/* ---------- AUDIT ---------- */
+$('#auditRefresh').onclick = loadAudit;
+async function loadAudit(){
+  try{
+    const r=await api('/audit/tail?n=40');
+    $('#chainStatus').innerHTML = r.chain_ok ? `<span class="chip approve">Chain verified</span> <span class="small muted">${r.entries} entries, none altered</span>` : `<span class="chip decline">Chain broken</span> <span class="small">An entry was edited or removed.</span>`;
+    $('#auditBody').innerHTML = r.tail.length ? r.tail.map(e=>`<tr><td class="small">${esc(e.ts.replace('T',' ').slice(0,19))}</td><td>${esc(e.event)}</td><td>${e.status}</td><td class="small" style="font-family:ui-monospace,monospace">${e.request?.vendor_hash? esc(e.request.vendor_hash.slice(0,16))+'…':'–'}</td><td class="small">${e.response? `${e.response.score} · ${e.response.band}` : esc(e.reason || e.source || (e.alerts!=null? e.alerts+' alerts':'') || '–')}</td><td class="small">${esc(e.model_version||'–')}</td></tr>`).join('') : '<tr><td colspan="6" class="empty">No entries yet. Score an application first.</td></tr>';
+  }catch(e){ $('#auditBody').innerHTML='<tr><td colspan="6" class="empty">'+esc(e.message)+'</td></tr>'; }
+}
+
+/* ---------- boot ---------- */
+(async()=>{
+  try{ const h=await api('/health'); $('#health').textContent = h.model_loaded ? 'Service ready · '+h.model_version : 'Model not loaded';
+       const info=await api('/model-info'); window._bands=info.bands; }catch(e){ $('#health').textContent='Service unavailable'; }
+  let t='overview'; try{ t=localStorage.getItem('vc-tab')||'overview'; }catch(e){}
+  showTab(t);
+})();
+</script>
+</body>
+</html>
