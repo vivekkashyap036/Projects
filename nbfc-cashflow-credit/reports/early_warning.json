@@ -1,0 +1,54 @@
+{
+  "data": "SYNTHETIC - not evidence of real-world performance",
+  "setup": {
+    "vendors": 2000,
+    "defaulters": 195,
+    "weekly_runs": "every 7 days from origination until the first missed EMI or the end of the 12-month window",
+    "thresholds": {
+      "baseline_weeks": 12,
+      "recent_weeks": 4,
+      "dip_ratio": 0.5,
+      "min_dip_weeks": 3,
+      "mean_ratio_max": 0.6,
+      "dry_spell_days": 21,
+      "high_severity_ratio": 0.35,
+      "outcome_horizon_days": 90
+    },
+    "evaluated_on": "held-out test vendors"
+  },
+  "vendor_level": {
+    "recall": 0.6718,
+    "precision": 0.2339,
+    "flagged_vendors": 560,
+    "true_positives": 131,
+    "good_payers_flagged_share": 0.2377,
+    "base_default_rate": 0.0975
+  },
+  "alert_level": {
+    "alerts": 1563,
+    "precision_missed_within_horizon": 0.2226,
+    "horizon_days": 90,
+    "by_severity": {
+      "high": {
+        "alerts": 1049,
+        "precision": 0.224
+      },
+      "medium": {
+        "alerts": 514,
+        "precision": 0.2198
+      }
+    }
+  },
+  "lead_time_days": {
+    "median": 22.0,
+    "p25": 9.0,
+    "p75": 45.0,
+    "share_at_least_14_days": 0.6718,
+    "share_at_least_30_days": 0.4122
+  },
+  "diagnostics_synthetic_only": {
+    "recall_when_distress_visible_in_upi": 0.8163,
+    "recall_when_distress_not_visible": 0.2292,
+    "share_of_false_alarms_with_temporary_dip": 0.2191
+  }
+}

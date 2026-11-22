@@ -46,10 +46,12 @@ evaluation:
 early_warning:
   baseline_weeks: 12           # vendor's own prior 12-week median
   recent_weeks: 4
-  dip_ratio: 0.60              # a week counts as a dip if below 60% of the vendor's baseline median
+  # Tuned on the TRAINING vendors only (grid in docs/PHASE_REPORTS.md); reported on test vendors.
+  dip_ratio: 0.50              # a week counts as a dip if below 50% of the vendor's baseline median
   min_dip_weeks: 3             # sustained dip = at least 3 of the last 4 weeks
-  mean_ratio_max: 0.70         # and the 4-week mean is below 70% of baseline
-  dry_spell_days: 7            # zero-inflow run of 7+ days inside the last 4 weeks
+  mean_ratio_max: 0.60         # and the 4-week mean is below 60% of baseline
+  dry_spell_days: 21           # zero-inflow run of 21+ days inside the last 4 weeks
+  high_severity_ratio: 0.35    # 4-week mean below 35% of baseline -> high severity
   outcome_horizon_days: 90     # a flag "counts" if a payment is missed within this many days
 
 explanation:
