@@ -55,7 +55,7 @@ early_warning:
   outcome_horizon_days: 90     # a flag "counts" if a payment is missed within this many days
 
 explanation:
-  provider: "auto"             # auto | anthropic | none
+  provider: "auto"             # auto | anthropic | openai_compatible | none  (env LLM_PROVIDER overrides)
   model: "claude-opus-5-5"
   max_tokens: 1200
   timeout_s: 30

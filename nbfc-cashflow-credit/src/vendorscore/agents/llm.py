@@ -60,6 +60,39 @@ class AnthropicProvider:
         return text
 
 
+class OpenAICompatibleProvider:
+    """Any server that speaks the OpenAI-style /chat/completions format.
+
+    Covers free options such as a local Ollama model (no key, nothing leaves the machine)
+    and free API tiers. Configure with LLM_BASE_URL, LLM_MODEL and, if needed, LLM_API_KEY.
+    """
+
+    name = "openai_compatible"
+
+    def __init__(self, base_url: str, model: str, api_key: str | None, max_tokens: int, timeout_s: float) -> None:
+        import httpx
+
+        self._httpx = httpx
+        self.url = base_url.rstrip("/") + "/chat/completions"
+        self.model = model
+        self.headers = {"Authorization": f"Bearer {api_key}"} if api_key else {}
+        self.max_tokens = max_tokens
+        self.timeout_s = timeout_s
+
+    def generate(self, system: str, user: str) -> str:
+        body = {"model": self.model, "max_tokens": self.max_tokens, "temperature": 0,
+                "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}]}
+        try:
+            r = self._httpx.post(self.url, json=body, headers=self.headers, timeout=self.timeout_s)
+            r.raise_for_status()
+            text = r.json()["choices"][0]["message"]["content"]
+        except (self._httpx.HTTPError, KeyError, IndexError, TypeError, ValueError) as exc:
+            raise LLMUnavailable(f"{type(exc).__name__}: {str(exc)[:200]}") from exc
+        if not text or not text.strip():
+            raise LLMUnavailable("empty response")
+        return text
+
+
 class NoProvider:
     name = "none"
 
@@ -83,5 +116,13 @@ def get_provider() -> LLMProvider:
         except Exception as exc:  # SDK missing or misconfigured
             log.warning("anthropic provider unavailable (%s); using templates", exc)
             return NoProvider()
+    if choice == "openai_compatible":
+        base = os.environ.get("LLM_BASE_URL", "http://localhost:11434/v1")  # Ollama's default
+        model = os.environ.get("LLM_MODEL")
+        if not model:
+            log.warning("LLM_PROVIDER=openai_compatible needs LLM_MODEL; using templates")
+            return NoProvider()
+        return OpenAICompatibleProvider(base, model, os.environ.get("LLM_API_KEY"), int(cfg["max_tokens"]),
+                                        float(cfg["timeout_s"]))
     log.warning("unknown LLM_PROVIDER %r; using templates", choice)
     return NoProvider()

@@ -65,6 +65,15 @@ Every threshold lives in [`config/model_config.yaml`](config/model_config.yaml):
 
 LLM settings: `LLM_PROVIDER=auto|anthropic|none` and `LLM_MODEL` (default `claude-opus-5-5`, with server-side fallback enabled if the model declines). Any provider that implements `generate(system, user) -> str` can be plugged in through `vendorscore.agents.llm`.
 
+**Free option: a local model with [Ollama](https://ollama.com).** No key and no cost, and nothing leaves your machine:
+
+```bash
+ollama pull qwen2.5:7b          # or another model that handles Hindi well
+LLM_PROVIDER=openai_compatible LLM_MODEL=qwen2.5:7b make serve
+```
+
+`LLM_PROVIDER=openai_compatible` also works with any hosted OpenAI-style endpoint: set `LLM_BASE_URL` and `LLM_API_KEY`.
+
 ## Privacy and audit
 
 * Consent is checked before anything is scored.

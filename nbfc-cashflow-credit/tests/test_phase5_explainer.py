@@ -116,3 +116,35 @@ def test_no_provider_uses_template_and_is_deterministic(outputs):
     a = ex.explain(outputs[3], provider=NoProvider())
     b = ex.explain(outputs[3], provider=NoProvider())
     assert a == b and a["source"] == "template"
+
+
+def test_openai_compatible_provider(monkeypatch, outputs):
+    """Works with any /chat/completions server (e.g. local Ollama); failures fall back to the template."""
+    import httpx
+
+    from vendorscore.agents import llm
+
+    inp = ex.build_llm_input(outputs[1])
+    sent = {}
+
+    def fake_post(url, json, headers, timeout):
+        sent.update(url=url, body=json, headers=headers)
+        return httpx.Response(200, json={"choices": [{"message": {"content": __import__("json").dumps(_good(inp), ensure_ascii=False)}}]},
+                              request=httpx.Request("POST", url))
+
+    monkeypatch.setenv("LLM_PROVIDER", "openai_compatible")
+    monkeypatch.setenv("LLM_MODEL", "some-free-model")
+    monkeypatch.delenv("LLM_API_KEY", raising=False)
+    monkeypatch.setattr(httpx, "post", fake_post)
+    p = llm.get_provider()
+    assert p.name == "openai_compatible"
+    res = ex.explain(outputs[1], provider=p)
+    assert res["source"] == "llm"
+    assert sent["url"] == "http://localhost:11434/v1/chat/completions" and sent["headers"] == {}
+    assert "PRIVATE-77" not in str(sent["body"])
+
+    def failing_post(*a, **k):
+        raise httpx.ConnectError("no server")
+
+    monkeypatch.setattr(httpx, "post", failing_post)
+    assert ex.explain(outputs[1], provider=llm.get_provider())["source"] == "template"
