@@ -32,8 +32,8 @@ scorecard:
 bands:
   # score >= approve_min -> "approve"; score < decline_below -> "decline"; else "review".
   # Anything that is not a clear approve goes to a human.
-  approve_min: 640
-  decline_below: 560
+  approve_min: 575
+  decline_below: 535
 
 baseline_rule:
   min_income_to_emi: 3.0       # approve if monthly UPI income >= 3 x EMI
