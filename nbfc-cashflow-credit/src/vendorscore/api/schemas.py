@@ -70,3 +70,12 @@ class ScoreResponse(BaseModel):
     model_version: str
     decision_note: str = DECISION_NOTE
     data_note: str = DATA_NOTE
+
+
+class ExplainRequest(BaseModel):
+    """The /score output (extra fields are ignored and never forwarded to the LLM)."""
+    request_id: str | None = None
+    score: int = Field(..., ge=300, le=900)
+    band: Literal["approve", "review", "decline"]
+    reasons: list[Reason]
+    strengths: list[Reason] = []

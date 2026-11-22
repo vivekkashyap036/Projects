@@ -108,3 +108,14 @@ def test_api_scoring_is_deterministic(client):
     b = client.post("/score", json=_payload()).json()
     a.pop("request_id"), b.pop("request_id")
     assert a == b
+
+
+def test_explain_endpoint_uses_only_score_output(client, monkeypatch):
+    monkeypatch.setenv("LLM_PROVIDER", "none")
+    body = client.post("/score", json=_payload(vid="HIDDEN-55")).json()
+    r = client.post("/explain", json=body)
+    assert r.status_code == 200
+    out = r.json()
+    assert out["source"] == "template" and out["validator"]["ok"]
+    assert "HIDDEN-55" not in json.dumps(out["llm_input"])
+    assert str(body["score"]) in out["en"]

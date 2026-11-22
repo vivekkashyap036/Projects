@@ -15,7 +15,8 @@ from fastapi.responses import JSONResponse
 
 from vendorscore import __version__
 from vendorscore.api.audit import AuditLog, hash_vendor_id
-from vendorscore.api.schemas import DATA_NOTE, DECISION_NOTE, ScoreRequest, ScoreResponse
+from vendorscore.agents.explainer import explain
+from vendorscore.api.schemas import DATA_NOTE, DECISION_NOTE, ExplainRequest, ScoreRequest, ScoreResponse
 from vendorscore.config import PROJECT_ROOT, load_config
 from vendorscore.features import FEATURES, records_to_series
 from vendorscore.logging_setup import get_logger
@@ -135,6 +136,17 @@ def score(req: ScoreRequest) -> Any:
            {"reason_codes": [r["code"] for r in out["reasons"]], "strength_codes": [r["code"] for r in out["strengths"]]})
     log.info("scored request %s band=%s score=%s", rid[:8], out["band"], out["score"])
     return resp
+
+
+@app.post("/explain")
+def explain_endpoint(req: ExplainRequest) -> dict[str, Any]:
+    """Explanation agent: takes ONLY the /score output and returns English + Hindi text."""
+    res = explain(req.model_dump())
+    assert state.audit is not None
+    state.audit.append("explain", {"model_version": state.scorer.model_version if state.scorer else None,
+                                   "status": 200, "request_id": req.request_id, "source": res["source"],
+                                   "validator_ok": res["validator"]["ok"]})
+    return res
 
 
 @app.exception_handler(ValueError)
