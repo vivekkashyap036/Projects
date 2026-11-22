@@ -22,3 +22,11 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# NBFC cash-flow credit project
+.venv-nbfc/
+__pycache__/
+.pytest_cache/
+nbfc-cashflow-credit/data/*.parquet
+nbfc-cashflow-credit/data/*.csv
+nbfc-cashflow-credit/artifacts/

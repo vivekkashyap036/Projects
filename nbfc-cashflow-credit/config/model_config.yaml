@@ -1,0 +1,62 @@
+# Central configuration. Every threshold a lender may want to change lives here.
+# All numbers were tuned on SYNTHETIC data only.
+
+seed: 42
+model_version: "cfs-lr-0.1.0"
+
+data:
+  n_vendors: 8000
+  observation_days: 180        # days of UPI history before the loan starts
+  performance_days: 365        # days simulated after origination (for outcomes / early warning)
+  target_default_rate: 0.095   # calibrated overall 12-month default rate
+
+features:
+  min_days: 90                 # /score rejects fewer days than this
+  max_days: 180                # only the most recent N days are used
+  recent_window_days: 30       # trend: last 30 days vs the 60 days before them
+  prior_window_days: 60
+
+model:
+  test_size: 0.25
+  logreg_C_grid: [0.01, 0.03, 0.1, 0.3, 1.0, 3.0]
+  cv_folds: 5
+
+scorecard:
+  # score = offset + factor * ln(good:bad odds); factor = pdo / ln(2)
+  pdo: 40                      # +40 points doubles the good:bad odds
+  anchor_score: 600
+  anchor_odds: 20              # 20:1 good:bad odds (PD ~4.8%) maps to 600
+  min_score: 300
+  max_score: 900
+
+bands:
+  # score >= approve_min -> "approve"; score < decline_below -> "decline"; else "review".
+  # Anything that is not a clear approve goes to a human.
+  approve_min: 640
+  decline_below: 560
+
+baseline_rule:
+  min_income_to_emi: 3.0       # approve if monthly UPI income >= 3 x EMI
+
+evaluation:
+  n_bootstrap: 1000
+  weak_segment_auc_gap: 0.05   # flag segment if AUC < overall AUC - gap
+  min_bads_for_segment: 30     # segments with fewer bads are flagged "too few defaults to judge"
+
+early_warning:
+  baseline_weeks: 12           # vendor's own prior 12-week median
+  recent_weeks: 4
+  dip_ratio: 0.60              # a week counts as a dip if below 60% of the vendor's baseline median
+  min_dip_weeks: 3             # sustained dip = at least 3 of the last 4 weeks
+  mean_ratio_max: 0.70         # and the 4-week mean is below 70% of baseline
+  dry_spell_days: 7            # zero-inflow run of 7+ days inside the last 4 weeks
+  outcome_horizon_days: 90     # a flag "counts" if a payment is missed within this many days
+
+explanation:
+  provider: "auto"             # auto | anthropic | none
+  model: "claude-opus-5-5"
+  max_tokens: 1200
+  timeout_s: 30
+
+audit:
+  path: "artifacts/audit_log.jsonl"
