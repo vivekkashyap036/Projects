@@ -1,0 +1,108 @@
+# The FastAPI + LangGraph backend.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hr-api
+  namespace: hr-assistant
+  labels:
+    app: hr-api
+spec:
+  replicas: 2
+  revisionHistoryLimit: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1          # start 1 new pod before ...
+      maxUnavailable: 0    # ... killing an old one => zero-downtime deploys
+  selector:
+    matchLabels:
+      app: hr-api
+  template:
+    metadata:
+      labels:
+        app: hr-api
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        fsGroup: 10001
+      # 1) Wait for Postgres, 2) build the vector index into a shared volume.
+      # initContainers run to completion, in order, before the main container starts.
+      initContainers:
+        - name: wait-for-postgres
+          image: postgres:16-alpine
+          command: ["sh", "-c", "until pg_isready -h $POSTGRES_HOST -U $POSTGRES_USER; do echo waiting for db; sleep 2; done"]
+          envFrom:
+            - configMapRef: {name: hr-config}
+        - name: build-index
+          image: hr-assistant:latest
+          imagePullPolicy: IfNotPresent
+          command: ["python", "-m", "app.ingest"]
+          envFrom:
+            - configMapRef: {name: hr-config}
+            - secretRef: {name: hr-secrets}
+          volumeMounts:
+            - {name: storage, mountPath: /app/storage}
+      containers:
+        - name: api
+          image: hr-assistant:latest
+          imagePullPolicy: IfNotPresent   # kind: image is side-loaded with `kind load docker-image`
+          ports:
+            - name: http
+              containerPort: 8000
+          envFrom:
+            - configMapRef: {name: hr-config}
+            - secretRef: {name: hr-secrets}
+          env:
+            # $(VAR) expansion builds the URL from the ConfigMap + Secret values above
+            - name: DATABASE_URL
+              value: "postgresql+psycopg://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@$(POSTGRES_HOST):5432/$(POSTGRES_DB)"
+          # startupProbe gives the app time to load models; liveness/readiness only start after it passes.
+          startupProbe:
+            httpGet: {path: /health, port: http}
+            periodSeconds: 5
+            failureThreshold: 30        # up to 150 s to start
+          livenessProbe:                # failing => kubelet RESTARTS the container
+            httpGet: {path: /health, port: http}
+            periodSeconds: 15
+            timeoutSeconds: 3
+          readinessProbe:               # failing => pod is REMOVED from Service endpoints (no traffic)
+            httpGet: {path: /ready, port: http}
+            periodSeconds: 10
+            timeoutSeconds: 3
+          resources:
+            requests: {cpu: 250m, memory: 512Mi}   # used by the scheduler + as the HPA baseline
+            limits: {cpu: "1", memory: 1536Mi}     # memory over limit => OOMKilled
+          volumeMounts:
+            - {name: storage, mountPath: /app/storage}
+      volumes:
+        - name: storage
+          emptyDir: {}     # per-pod scratch space; the index is rebuilt by the initContainer
+---
+# Stable virtual IP + DNS name (hr-api.hr-assistant.svc.cluster.local) that load-balances
+# across all READY hr-api pods.
+apiVersion: v1
+kind: Service
+metadata:
+  name: hr-api
+  namespace: hr-assistant
+spec:
+  type: ClusterIP
+  selector:
+    app: hr-api
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+---
+# Keep at least one API pod up during voluntary disruptions (node drain, cluster upgrade).
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: hr-api
+  namespace: hr-assistant
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: hr-api

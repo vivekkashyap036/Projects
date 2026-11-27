@@ -1,0 +1,20 @@
+# Non-secret configuration, injected into pods as environment variables (envFrom).
+# Changing it does NOT restart pods automatically: run
+#   kubectl -n hr-assistant rollout restart deployment/hr-api
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: hr-config
+  namespace: hr-assistant
+data:
+  LLM_PROVIDER: "auto"            # auto -> uses whichever API key is present in the Secret, else "mock"
+  EMBEDDING_PROVIDER: "fastembed"
+  TOP_K: "4"
+  RELEVANCE_THRESHOLD: "0.45"
+  LLM_GRADER: "true"
+  CHROMA_DIR: "/app/storage/chroma"
+  DOCS_DIR: "/app/data/policies"
+  # Service DNS name of Postgres inside the cluster: <service>.<namespace>.svc.cluster.local
+  POSTGRES_HOST: "postgres.hr-assistant.svc.cluster.local"
+  POSTGRES_DB: "hr"
+  POSTGRES_USER: "hr"

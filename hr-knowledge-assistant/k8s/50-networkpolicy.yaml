@@ -1,0 +1,19 @@
+# Zero-trust networking: only hr-api pods may talk to Postgres on 5432.
+# (Enforced only if the cluster's CNI supports NetworkPolicy: Calico, Cilium, recent kindnet.)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: postgres-allow-api-only
+  namespace: hr-assistant
+spec:
+  podSelector:
+    matchLabels:
+      app: postgres
+  policyTypes: ["Ingress"]
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: hr-api
+      ports:
+        - port: 5432

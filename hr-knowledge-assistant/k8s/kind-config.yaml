@@ -1,0 +1,12 @@
+# Local 3-node cluster: 1 control plane + 2 workers.
+# Port 30080 on the node is mapped to localhost:8080 so you can open the UI without port-forward.
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+name: hr-assistant
+nodes:
+  - role: control-plane
+    extraPortMappings:
+      - containerPort: 30080   # NodePort of the UI service
+        hostPort: 8080
+  - role: worker
+  - role: worker

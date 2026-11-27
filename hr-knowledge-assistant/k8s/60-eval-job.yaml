@@ -1,0 +1,33 @@
+# A one-off Job: runs the RAG evaluation inside the cluster with the same config as the API.
+# Pods of a Job run to completion (vs. a Deployment that keeps them running forever).
+#   kubectl apply -f k8s/60-eval-job.yaml && kubectl -n hr-assistant logs -f job/rag-eval
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: rag-eval
+  namespace: hr-assistant
+spec:
+  backoffLimit: 1
+  ttlSecondsAfterFinished: 3600    # auto-delete an hour after it finishes
+  template:
+    spec:
+      restartPolicy: Never
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+      containers:
+        - name: eval
+          image: hr-assistant:latest
+          imagePullPolicy: IfNotPresent
+          command: ["sh", "-c", "python -m app.ingest && python -m eval.evaluate"]
+          envFrom:
+            - configMapRef: {name: hr-config}
+            - secretRef: {name: hr-secrets}
+          env:
+            - name: DATABASE_URL
+              value: "sqlite:////app/storage/eval.db"
+          volumeMounts:
+            - {name: storage, mountPath: /app/storage}
+      volumes:
+        - name: storage
+          emptyDir: {}

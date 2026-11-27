@@ -24,3 +24,9 @@ Outputs a static site in `dist/`, deployable to Vercel, Netlify, GitHub Pages, o
 ## Export to PDF
 
 Click "Save as PDF" in the app, which opens the browser print dialog (styled for a clean, one-page print layout).
+
+---
+
+## Other projects in this repo
+
+- **[hr-knowledge-assistant/](hr-knowledge-assistant/)**: agentic RAG HR chatbot (FastAPI, LangChain, LangGraph, Chroma + BM25 hybrid search, Streamlit + React, Postgres), containerised with Docker and deployed on Kubernetes (kind). Includes tests, a retrieval evaluation harness and interview-prep docs.

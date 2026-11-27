@@ -1,0 +1,7 @@
+# A namespace groups everything for this app and lets us apply quotas / RBAC / cleanup in one go.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: hr-assistant
+  labels:
+    app.kubernetes.io/part-of: hr-assistant

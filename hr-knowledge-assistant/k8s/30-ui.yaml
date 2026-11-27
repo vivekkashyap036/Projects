@@ -1,0 +1,53 @@
+# Streamlit UI: same image, different command. Talks to the API through its Service DNS name.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hr-ui
+  namespace: hr-assistant
+  labels:
+    app: hr-ui
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hr-ui
+  template:
+    metadata:
+      labels:
+        app: hr-ui
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+      containers:
+        - name: ui
+          image: hr-assistant:latest
+          imagePullPolicy: IfNotPresent
+          command: ["streamlit", "run", "ui/streamlit_app.py", "--server.port=8501", "--server.address=0.0.0.0", "--server.headless=true"]
+          ports:
+            - name: http
+              containerPort: 8501
+          env:
+            - name: API_URL
+              value: "http://hr-api"     # short Service name works inside the same namespace
+          readinessProbe:
+            httpGet: {path: /_stcore/health, port: http}
+            periodSeconds: 10
+          resources:
+            requests: {cpu: 100m, memory: 256Mi}
+            limits: {cpu: 500m, memory: 512Mi}
+---
+# NodePort exposes the UI on every node's port 30080 (mapped to localhost:8080 by kind-config.yaml).
+apiVersion: v1
+kind: Service
+metadata:
+  name: hr-ui
+  namespace: hr-assistant
+spec:
+  type: NodePort
+  selector:
+    app: hr-ui
+  ports:
+    - port: 80
+      targetPort: http
+      nodePort: 30080
